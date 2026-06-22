@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DriCo: Drift-Aware Coordination for Long-Horizon Multi-Agent Collaboration</title>
+  <meta name="description" content="Project page for DriCo, a drift-aware coordination framework for long-horizon LLM-based multi-agent collaboration." />
+  <style>
+    :root{
+      --bg:#f7f8fb;
+      --card:#fff;
+      --text:#182033;
+      --muted:#5d667a;
+      --line:#e7eaf1;
+      --accent:#2387D2;
+      --accent2:#D77D37;
+      --shared:#2387D2;
+      --intervention:#D77D37;
+      --drift:#9B55C3;
+      --soft:#eef2ff;
+      --soft2:#eafaf7;
+      --shadow:0 20px 50px rgba(23,32,54,.08);
+      --shadow-hover:0 28px 70px rgba(23,32,54,.16);
+      --radius:24px;
+      --max:1680px;
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at 9% 0%,rgba(35,135,210,.18),transparent 34%),
+        radial-gradient(circle at 88% 6%,rgba(215,125,55,.13),transparent 30%),
+        radial-gradient(circle at 78% 58%,rgba(155,85,195,.12),transparent 36%),
+        linear-gradient(180deg,#fbfcff 0%,#f5f8fd 42%,#eef3fa 100%);
+      line-height:1.6;
+    }
+    a{color:inherit;text-decoration:none}
+    img{max-width:100%;display:block}
+
+    .nav{
+      position:sticky;
+      top:0;
+      z-index:10;
+      backdrop-filter:blur(18px);
+      background:rgba(247,248,251,.82);
+      border-bottom:1px solid rgba(231,234,241,.9);
+    }
+    .nav-inner{
+      max-width:var(--max);
+      margin:0 auto;
+      padding:14px 28px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:18px;
+    }
+    .brand{font-weight:850;letter-spacing:-.04em;font-size:1.12rem}
+    .nav-links{display:flex;gap:20px;align-items:center;color:var(--muted);font-size:.95rem}
+    .nav-links a{transition:color .2s ease,transform .2s ease}
+    .nav-links a:hover{color:var(--accent);transform:translateY(-1px)}
+
+    .container{max-width:var(--max);margin:0 auto;padding:0 28px}
+    .hero{padding:92px 0 54px;text-align:center}
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:8px 14px;
+      color:var(--muted);
+      background:rgba(255,255,255,.76);
+      font-size:.92rem;
+      margin-bottom:22px;
+      box-shadow:0 10px 25px rgba(23,32,54,.04);
+    }
+    .tag-dot{width:8px;height:8px;border-radius:50%;background:var(--accent2)}
+    h1{margin:0 auto;max-width:1500px;font-size:clamp(2.6rem,6.5vw,5.9rem);line-height:.98;letter-spacing:-.075em}
+    .subtitle{margin:26px auto 0;max-width:900px;color:var(--muted);font-size:clamp(1.05rem,1.7vw,1.3rem)}
+    .authors{margin:24px auto 0;max-width:820px;color:#394156;font-size:1rem}
+    .actions{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:34px}
+    .button{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height:46px;
+      padding:0 18px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:var(--card);
+      color:var(--text);
+      font-weight:750;
+      box-shadow:0 10px 25px rgba(23,32,54,.05);
+      transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease,background .2s ease;
+    }
+    .button.primary{background:var(--text);color:white;border-color:var(--text)}
+    .button:hover{transform:translateY(-3px);box-shadow:0 16px 38px rgba(23,32,54,.14);border-color:rgba(51,92,255,.28)}
+
+    section{padding:52px 0}
+    .section-head{display:flex;justify-content:space-between;gap:24px;align-items:flex-end;margin-bottom:22px}
+    .eyebrow{color:var(--accent);font-weight:850;text-transform:uppercase;letter-spacing:.12em;font-size:.78rem;margin-bottom:8px}
+    h2{margin:0;font-size:clamp(1.9rem,3.2vw,3rem);letter-spacing:-.055em;line-height:1.08}
+    h3{margin:0 0 10px;font-size:1.2rem;letter-spacing:-.025em}
+    p{margin:0}
+    .note{color:var(--muted);font-size:.97rem}
+
+    .card{
+      background:rgba(255,255,255,.86);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      transition:transform .26s ease,box-shadow .26s ease,border-color .26s ease,background .26s ease;
+    }
+    .card:hover{transform:translateY(-6px);box-shadow:var(--shadow-hover);border-color:rgba(51,92,255,.22);background:rgba(255,255,255,.96)}
+
+    .paper-card{padding:clamp(24px,4vw,44px);display:grid;grid-template-columns:1fr 1.08fr;gap:34px;align-items:center}
+    .paper-card.reverse{grid-template-columns:1.12fr .88fr}
+
+    .figure-box{
+      position:relative;
+      overflow:hidden;
+      border-radius:20px;
+      border:1px solid var(--line);
+      background:#fff;
+      box-shadow:0 14px 32px rgba(23,32,54,.06);
+    }
+    .figure-box img{
+      width:100%;
+      height:auto;
+      transition:transform .35s ease,filter .35s ease;
+    }
+    .figure-box:hover img{transform:scale(1.025);filter:saturate(1.06) contrast(1.02)}
+    .figure-caption{
+      padding:12px 16px;
+      color:var(--muted);
+      font-size:.9rem;
+      border-top:1px solid var(--line);
+      background:linear-gradient(180deg,#fff,#fafbfe);
+    }
+
+    .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+    .feature{padding:24px;min-height:208px}
+    .feature .icon{
+      width:44px;
+      height:44px;
+      display:grid;
+      place-items:center;
+      border-radius:15px;
+      background:var(--soft);
+      color:var(--accent);
+      font-weight:900;
+      margin-bottom:15px;
+      transition:transform .26s ease,background .26s ease;
+    }
+    .feature:hover .icon{transform:rotate(-5deg) scale(1.08);background:#e2e8ff}
+
+    .method{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+    .method-step{padding:26px;position:relative;overflow:hidden;min-height:185px}
+    .method-step:after{
+      content:attr(data-step);
+      position:absolute;
+      right:18px;
+      bottom:-22px;
+      font-size:5.7rem;
+      font-weight:950;
+      color:rgba(51,92,255,.08);
+      line-height:1;
+      transition:transform .26s ease,color .26s ease;
+    }
+    .method-step:hover:after{transform:translateY(-6px);color:rgba(51,92,255,.13)}
+
+    .results{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+    .metric{padding:26px;min-height:190px}
+    .metric-value{font-size:2.4rem;font-weight:950;letter-spacing:-.06em;color:var(--accent);margin-bottom:4px}
+    .two-col{display:grid;grid-template-columns:.9fr 1.1fr;gap:18px;align-items:start}
+    .list{margin:16px 0 0;padding-left:20px;color:var(--muted)}
+    .list li{margin:8px 0}
+
+    table{width:100%;border-collapse:collapse;overflow:hidden;border-radius:16px;font-size:.95rem}
+    th,td{padding:14px 16px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+    th{color:var(--muted);font-weight:850;background:#fafbfe}
+    tr:last-child td{border-bottom:0}
+    tbody tr{transition:background .18s ease}
+    tbody tr:hover{background:#f7f9ff}
+
+    .bibtex{padding:22px;overflow-x:auto}
+    pre{margin:0;white-space:pre-wrap;color:#283045;font-size:.9rem}
+    footer{padding:46px 0 70px;color:var(--muted);text-align:center}
+
+    @media(max-width:1100px){
+      :root{--max:1680px}
+      .paper-card,.paper-card.reverse,.two-col{grid-template-columns:1fr}
+      .grid-3,.method{grid-template-columns:repeat(2,1fr)}
+    }
+    @media(max-width:760px){
+      .nav-links{display:none}
+      .container,.nav-inner{padding-left:18px;padding-right:18px}
+      .hero{padding-top:58px}
+      section{padding:38px 0}
+      .section-head{display:block}
+      .grid-3,.method,.results{grid-template-columns:1fr}
+      h1{font-size:clamp(2.25rem,12vw,3.8rem)}
+      .paper-card{padding:20px}
+      .feature,.method-step,.metric{padding:20px}
+    }
+    @media(prefers-reduced-motion:reduce){
+      *,*::before,*::after{transition:none!important;scroll-behavior:auto!important}
+      .card:hover,.button:hover{transform:none!important}
+      .figure-box:hover img{transform:none!important}
+    }
+  
+
+
+
+
+/* Paper accent colors */
+.shared-word{color:var(--shared);font-weight:800}
+.intervention-word{color:var(--intervention);font-weight:800}
+.drift-word{color:var(--drift);font-weight:800}
+
+/* Unified figure-text cards for Method and Benchmark */
+.figure-text-card{
+  grid-template-columns: minmax(560px, .98fr) minmax(420px, 1.02fr);
+  gap: 64px;
+  align-items: center;
+  padding: clamp(34px, 4vw, 58px);
+}
+
+.figure-text-card .figure-box{
+  width: 100%;
+  max-width: 820px;
+  justify-self: center;
+}
+
+.figure-text-card .figure-box img{
+  width: 100%;
+  height: 430px;
+  object-fit: contain;
+  padding: 18px;
+  background: #fff;
+}
+
+.figure-text-card .text-block{
+  max-width: 680px;
+  justify-self: start;
+}
+
+.figure-text-card .text-block h3{
+  font-size: 1.38rem;
+  margin-bottom: 16px;
+}
+
+.figure-text-card .text-block .note{
+  font-size: 1.04rem;
+  line-height: 1.72;
+}
+
+.figure-text-card .text-block .list{
+  font-size: 1.03rem;
+  line-height: 1.72;
+  margin-top: 18px;
+}
+
+.figure-text-card .text-block .list li{
+  margin: 9px 0;
+}
+
+@media(max-width:1200px){
+  .figure-text-card{
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+  .figure-text-card .figure-box{
+    max-width: 900px;
+  }
+  .figure-text-card .figure-box img{
+    height: auto;
+    max-height: 420px;
+  }
+  .figure-text-card .text-block{
+    max-width: none;
+  }
+}
+
+@media(max-width:760px){
+  .figure-text-card{
+    padding: 22px;
+  }
+  .figure-text-card .figure-box img{
+    max-height: 320px;
+    padding: 14px;
+  }
+}
+
+
+/* Active navigation state */
+.nav-links a{
+  position: relative;
+  padding: 4px 0;
+}
+
+.nav-links a.active{
+  color: var(--shared);
+  font-weight: 800;
+}
+
+.nav-links a.active::after{
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -7px;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--shared);
+}
+
+
+/* Soft accent background treatment */
+main{
+  position: relative;
+  overflow: hidden;
+}
+
+main::before{
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background:
+    radial-gradient(circle at 15% 22%, rgba(35,135,210,.075), transparent 24%),
+    radial-gradient(circle at 86% 36%, rgba(215,125,55,.06), transparent 22%),
+    radial-gradient(circle at 70% 76%, rgba(155,85,195,.07), transparent 26%);
+}
+
+.card{
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.84));
+}
+
+.hero .tag{
+  border-color: rgba(35,135,210,.18);
+}
+
+.shared-word,
+.intervention-word,
+.drift-word{
+  text-shadow: 0 1px 0 rgba(255,255,255,.7);
+}
+
+.benchmark-figure a{
+  display:block;
+  cursor:pointer;
+}
+
+.benchmark-figure:hover{
+  border-color:rgba(35,135,210,.35);
+}
+
+
+/* Side-by-side result figure cards */
+.result-figure-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:18px;
+  margin-top:18px;
+}
+
+.result-figure-card{
+  padding:22px;
+}
+
+.result-figure-card .figure-box{
+  margin-top:16px;
+}
+
+.result-figure-card .figure-box img{
+  width:100%;
+  height:320px;
+  object-fit:contain;
+  padding:14px;
+  background:#fff;
+}
+
+@media(max-width:900px){
+  .result-figure-grid{
+    grid-template-columns:1fr;
+  }
+  .result-figure-card .figure-box img{
+    height:auto;
+    max-height:360px;
+  }
+}
+
+</style>
+</head>
+<body>
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="#" class="brand">DriCo</a>
+    <div class="nav-links">
+      <a href="#abstract">Abstract</a>
+      <a href="#method">Method</a>
+      <a href="#benchmark">Benchmark</a>
+      <a href="#results">Results</a>
+    </div>
+  </div>
+</nav>
+
+<main>
+  <header class="hero container">
+    <div class="tag"><span class="tag-dot"></span> NeurIPS 2026 Submission</div>
+    <h1>DriCo: Drift-Aware Coordination for Long-Horizon Multi-Agent Collaboration</h1>
+    <p class="subtitle">A coordinator-driven framework that detects and mitigates <span class="drift-word">coordination drift</span> in LLM-based multi-agent systems through <span class="shared-word">shared context</span>, targeted <span class="intervention-word">intervention</span>, and preference-based optimization.</p>
+    <p class="authors">Anonymous Author(s)</p>
+    <div class="actions">
+      <a class="button primary" href="#">Paper</a>
+      <a class="button" href="https://github.com/anonymous-projectpage/DriCo" target="_blank" rel="noopener">Code</a>
+      <a class="button" href="https://huggingface.co/datasets/anonymous-24421/DriCo" target="_blank" rel="noopener">Dataset</a>
+      <a class="button" href="https://github.com/anonymous-projectpage/DriCo" target="_blank" rel="noopener">Benchmark</a>
+    </div>
+  </header>
+
+  <section id="abstract" class="container">
+    <div class="paper-card card">
+      <div>
+        <div class="eyebrow">Overview</div>
+        <h2>How can LLM-based multi-agent systems maintain efficient and stable coordination over long horizons in interactive environments?</h2>
+        <p class="subtitle" style="margin-left:0">DriCo introduces an explicit coordinator that aggregates agent-level information into <span class="shared-word">shared context</span>, assigns roles, and <span class="intervention-word">intervenes</span> when conflict, redundancy, or loops emerge. Agents use a hierarchical policy: a planner generates team-aware sub-goals, while an actor executes primitive actions with value-aware guidance.</p>
+      </div>
+      <figure class="figure-box">
+        <img src="Figure/Proposed_gif.gif" alt="Overview of the proposed DriCo framework" />
+        <figcaption class="figure-caption">DriCo framework: coordinator-mediated shared context, planning, and action execution.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section id="contributions" class="container">
+    <div class="section-head"><div><div class="eyebrow">Contributions</div><h2>What DriCo adds</h2></div></div>
+    <div class="grid-3">
+      <article class="feature card"><div class="icon">1</div><h3><span class="drift-word">Coordination drift</span></h3><p class="note">A measurable abstraction for long-horizon team-level misalignment, covering conflicts, redundant sub-goals, and looping behaviors.</p></article>
+      <article class="feature card"><div class="icon">2</div><h3><span class="shared-word">Shared-context coordination</span></h3><p class="note">A coordinator constructs team-level shared context and role assignments from dispersed local observations and sub-goals.</p></article>
+      <article class="feature card"><div class="icon">3</div><h3><span class="drift-word">Drift</span>-aware <span class="intervention-word">intervention</span></h3><p class="note">When <span class="drift-word">drift</span> exceeds a threshold, the coordinator revises context and selectively asks affected agents to regenerate sub-goals.</p></article>
+      <article class="feature card"><div class="icon">4</div><h3>Hierarchical agents</h3><p class="note">Each agent uses a planner for high-level sub-goal generation and an actor for low-level action execution.</p></article>
+      <article class="feature card"><div class="icon">5</div><h3>Preference-based learning</h3><p class="note">Coordinator and actor policies are optimized using preference objectives that favor lower drift and higher value actions.</p></article>
+      <article class="feature card"><div class="icon">6</div><h3>LLM-Overcooked</h3><p class="note">A language-oriented Overcooked-AI extension with separate training/evaluation environments, diverse layouts, recipes, and held-out task compositions.</p></article>
+    </div>
+  </section>
+
+  <section id="method" class="container">
+    <div class="section-head"><div><div class="eyebrow">Method</div><h2>Coordinator-driven long-horizon execution</h2></div></div>
+    <div class="method">
+      <article class="method-step card" data-step="01"><h3>Collect local information</h3><p class="note">Agents send local observations and candidate sub-goals to a communication buffer. The coordinator uses this buffer as the team-level coordination state.</p></article>
+      <article class="method-step card" data-step="02"><h3>Construct shared context</h3><p class="note">The coordinator summarizes team state into shared context and assigns roles. Planners condition on role, local observation, and shared context to generate sub-goals.</p></article>
+      <article class="method-step card" data-step="03"><h3>Intervene on drift</h3><p class="note">If trigger <span class="drift-word">drift</span> is high, the coordinator updates context and asks affected agents to revise their sub-goals, reducing conflict and redundancy while recovering from loops.</p></article>
+    </div>
+    <div class="paper-card reverse card figure-text-card" style="margin-top:18px">
+      <figure class="figure-box">
+        <img src="Figure/framework.png" alt="DriCo coordinator, planner, and actor modules" />
+        <figcaption class="figure-caption">Framework detail: <span class="shared-word">shared context</span> construction, context-aware planning, and preference-based action execution.</figcaption>
+      </figure>
+      <div class="text-block">
+        <h3>Coordination <span class="drift-word">drift</span> objective</h3>
+        <p class="note">DriCo scores candidate shared contexts by the negative trigger <span class="drift-word">drift</span> they induce. Lower <span class="drift-word">drift</span> means more coherent team-level behavior, so preference learning increases the likelihood of contexts that improve downstream coordination.</p>
+        <ul class="list">
+          <li><strong>Conflict:</strong> incompatible sub-goals under the current shared context.</li>
+          <li><strong>Redundancy:</strong> duplicated normalized task-level sub-goals.</li>
+          <li><strong>Loop:</strong> repeated action patterns in recent action history.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="benchmark" class="container">
+    <div class="section-head"><div><div class="eyebrow">Benchmark</div><h2>LLM-Overcooked</h2></div></div>
+    <div class="paper-card benchmark-card card figure-text-card" style="margin-top:18px">
+      <figure class="figure-box benchmark-figure">
+        <a href="https://github.com/anonymous-projectpage/DriCo" target="_blank" rel="noopener" aria-label="Open DriCo GitHub repository">
+          <img src="Figure/LLM-overcooked.png" alt="Example layouts in LLM-Overcooked" />
+        </a>
+        <figcaption class="figure-caption">Example LLM-Overcooked layouts used to evaluate long-horizon coordination.</figcaption>
+      </figure>
+      <div class="benchmark-text text-block">
+        <h3>Why a new benchmark?</h3>
+        <p class="note">DriCo is evaluated on LLM-Overcooked, an LLM-oriented extension of Overcooked-AI designed for language-conditioned goals, structured recipes, and long-horizon multi-agent coordination.</p>
+        <ul class="list">
+          <li>Separate training and evaluation environments.</li>
+          <li>Diverse layouts and recipe compositions.</li>
+          <li>Reference trajectory datasets for learning coordination policies.</li>
+          <li>Held-out configurations for in-benchmark generalization.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="results" class="container">
+    <div class="section-head"><div><div class="eyebrow">Results</div><h2>DriCo improves stability on harder tasks</h2></div></div>
+    <div class="paper-card card">
+      <div>
+        <div class="metric-value">55/70</div>
+        <h3>Best average success/progress with Qwen-2.5 7B</h3>
+        <p class="note">DriCo reaches 55% average success and 70% progress completeness on Forced Coordination with Qwen-2.5 7B, outperforming all listed baselines in the same setting.</p>
+      </div>
+      <figure class="figure-box">
+        <img src="Figure/performance.png" alt="Performance comparison results for DriCo on selected Llama-3.1 8B settings" />
+        <figcaption class="figure-caption">Performance visualization for selected Llama-3.1 8B settings.</figcaption>
+      </figure>
+    </div>
+
+    <div class="metric card" style="margin-top:18px"><div class="metric-value">Lower <span class="drift-word">drift</span></div><h3>Conflict, redundancy, and loop reduction</h3><p class="note"><span class="drift-word">Drift</span> analysis indicates that the coordinator keeps occurrence rates lower, especially on harder task levels where loops accumulate without shared-context intervention.</p></div>
+
+    <div class="paper-card card" style="margin-top:18px">
+      <div>
+        <h3>Qualitative recovery behavior</h3>
+        <p class="note">In the Baked Eggplant case study, DriCo detects loop states and restores progress through targeted coordination updates, while baseline agents exhibit conflict, redundancy, or repeated wait-and-place behaviors.</p>
+      </div>
+      <figure class="figure-box">
+        <img src="Figure/Case_study.png" alt="Qualitative case study on the Baked Eggplant task" />
+        <figcaption class="figure-caption">Case study: conflict, redundancy, loop, and DriCo recovery behavior.</figcaption>
+      </figure>
+    </div>
+
+
+
+    <div class="result-figure-grid">
+      <article class="result-figure-card card">
+        <h3>Coordination <span class="drift-word">drift</span> analysis</h3>
+        <p class="note">DriCo maintains lower conflict, redundancy, and loop occurrence rates, especially on harder tasks where the baseline accumulates loop-driven <span class="drift-word">drift</span>.</p>
+        <figure class="figure-box">
+          <img src="Figure/result_coord_drift.png" alt="Coordination drift occurrence rates across task difficulty levels" />
+          <figcaption class="figure-caption">Coordination <span class="drift-word">drift</span> occurrence rates decomposed into conflict, redundancy, and loop components.</figcaption>
+        </figure>
+      </article>
+      <article class="result-figure-card card">
+        <h3><span class="intervention-word">Intervention</span> effect analysis</h3>
+        <p class="note"><span class="intervention-word">Intervention</span>-triggered shared-context updates help DriCo continue improving progress completeness instead of plateauing early.</p>
+        <figure class="figure-box">
+          <img src="Figure/result_intervention.png" alt="Effect of intervention on progress completeness over the episode horizon" />
+          <figcaption class="figure-caption">Progress completeness with <span class="intervention-word">intervention</span> versus no-intervention over the episode horizon.</figcaption>
+        </figure>
+      </article>
+    </div>
+
+    <div class="card" style="margin-top:18px;overflow:hidden">
+      <table>
+        <thead><tr><th>Analysis</th><th>Main takeaway</th></tr></thead>
+        <tbody>
+          <tr><td>Overall performance</td><td>DriCo obtains the strongest success rate and progress completeness across task layouts and backbone models.</td></tr>
+          <tr><td>Coordination drift</td><td>The coordinator reduces intended failure modes: conflicts, redundant sub-goals, and loops.</td></tr>
+          <tr><td>Ablation</td><td>Removing shared context, intervention, or RL training degrades performance; shared context produces the largest drop.</td></tr>
+          <tr><td>Qualitative cases</td><td>On Baked Eggplant, DriCo detects loop states and restores progress through targeted coordination updates.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<footer class="container"><p> </p></footer>
+
+<script>
+  const navLinks = Array.from(document.querySelectorAll(".nav-links a[href^='#']"));
+  const sections = navLinks
+    .map(link => document.querySelector(link.getAttribute("href")))
+    .filter(Boolean);
+
+  function setActiveNav(id) {
+    navLinks.forEach(link => {
+      link.classList.toggle("active", link.getAttribute("href") === "#" + id);
+    });
+  }
+
+  navLinks.forEach(link => {
+    link.addEventListener("click", () => {
+      const id = link.getAttribute("href").slice(1);
+      setActiveNav(id);
+    });
+  });
+
+  const observer = new IntersectionObserver((entries) => {
+    const visible = entries
+      .filter(entry => entry.isIntersecting)
+      .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+
+    if (visible) {
+      setActiveNav(visible.target.id);
+    }
+  }, {
+    root: null,
+    threshold: [0.18, 0.28, 0.4, 0.6],
+    rootMargin: "-18% 0px -55% 0px"
+  });
+
+  sections.forEach(section => observer.observe(section));
+</script>
+
+</body>
+</html>
